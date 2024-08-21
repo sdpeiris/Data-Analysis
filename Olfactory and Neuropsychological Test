@@ -1,0 +1,466 @@
+######################################
+## clearing environment and setting working directory
+rm(list=ls()) 
+
+cat("\014")
+
+
+options(scipen = 999)
+
+library(tidyr)
+library(dplyr)
+library("readxl")
+library(ggplot2)
+library(ggpubr)
+library(ggbeeswarm)
+library(rstatix)
+library(car)
+library(emmeans)
+library(broom)
+
+#install.packages("emmeans")
+#installcar#install.packages("ggbeeswarm")
+#install.packages("writexl")
+#library(writexl)
+
+data <- read_excel("D:/Senal_Peiris/)
+
+
+
+data <- data %>%
+ arrange(Group)
+
+data <- data %>%
+  drop_na()
+
+data$Group <- factor(data$Group, 
+                                     levels = c("CN", "PDT", "PDAR"))
+levels(data$Group)
+
+
+#p <- ggplot(long_data, aes(x = Parkingson_Group, y = UPSIT_Score)) +
+  #geom_boxplot() +
+  #theme_classic() +
+  #labs(title = "Group differences in UPSIT scores",
+   #y = "UPSIT",
+    #x = "")
+
+
+
+#################figure 1#####################
+# Beeswarm plot for UPSIT
+ggplot(data, aes(x = Group, y = UPSIT, color = Group))+
+  geom_boxplot(data = , mapping = aes(x = Group, y = UPSIT, color = Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "UPSIT") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+
+############doing ANOVA on the data 
+
+####testing for normality of data
+shapiro.test(data$UPSIT[data$Group == "CN"])
+shapiro.test(data$UPSIT[data$Group == "PDT"])
+shapiro.test(data$UPSIT[data$Group == "PDAR"])
+##null hypothesis is that data follows a normal distribution
+#CN data doesn't follow normal distribution
+
+
+###Checking linerarity between covariate and the outcome variable
+
+ggscatter(
+  data, x = "HAM_D", y ="UPSIT"  ,
+  color = "Group", add = "reg.line"
+)+
+  stat_regline_equation(
+    aes(label =  paste(..eq.label.., ..rr.label.., sep = "~~~~"), color = Group)
+  )
+##as per scatter plot the co variate and the outcome variable have a linear relation at each level of the outcome variable
+
+###testing for homogeneity of the regression slopes
+data %>% anova_test(UPSIT ~ Group*HAM_D)
+## the interaction between the co variate and the grouping variable is not significant
+
+###testing for homogeneity of variance
+
+#install.packages("car")
+library(car)
+leveneTest(UPSIT~ Group, data = data)
+### reject null hence heteroskedastic
+bartlett.test(UPSIT ~ Group, data = data)
+##null hypothesis is that variance is equal
+## we fail to reject the null hypothesis hence there is homoskedasticity?
+
+
+####Checking the normality of residuals
+
+model <- lm(UPSIT ~ Group + HAM_D , data = data)
+
+model.metrics <- augment(model)%>%
+  select(-.hat, -.sigma, -.fitted) # Remove details
+head(model.metrics, 3)
+
+shapiro_test(model.metrics$.resid)
+## not significant hence there is normality of residuals
+
+model.metrics %>% levene_test(.resid ~ Group)
+### significant,hence there is heteroskedasticity in model
+##this is an issue and violates assumptions of ANCOVA
+
+#####doing ANCOVA test#####
+res.aov <- data %>% anova_test(UPSIT ~ HAM_D + Group)
+get_anova_table(res.aov)
+### after adjustment of HAM_D scores, there was a statistically significant difference in UPSIT
+### scores amongst the various groups
+
+pwc <- data %>% 
+  emmeans_test(
+    UPSIT ~ Group, covariate = HAM_D,
+    p.adjust.method = "bonferroni"
+  )
+pwc
+
+#################figure 3#####################
+## clearing environment and setting working directory
+rm(list=ls()) 
+
+cat("\014")
+
+options(scipen = 999)
+
+library(tidyr)
+library(dplyr)
+library("readxl")
+library(ggplot2)
+library(ggpubr)
+library(ggbeeswarm)
+library(rstatix)
+library(car)
+library(emmeans)
+
+#install.packages("ggbeeswarm")
+#install.packages("writexl")
+#library(writexl)
+
+IN_ON <- read_excel("D:/Senal_Peiris/)
+
+IN_ON <- pivot_longer(IN_ON, 
+                          cols = everything(), 
+                          names_to = "Parkingson_Group", 
+                          values_to = "IN_ON_Score")
+
+IN_ON <- IN_ON %>%
+  arrange(Parkingson_Group)
+
+IN_ON <- IN_ON %>%
+  drop_na()
+
+IN_ON$Parkingson_Group <- factor(IN_ON$Parkingson_Group, 
+                                     levels = c("CN", "PDT", "PDAR"))
+levels(IN_ON$Parkingson_Group)
+
+############
+OFC_ON <- read_excel("D:/Senal_Peiris/)
+
+OFC_ON <- pivot_longer(OFC_ON, 
+                      cols = everything(), 
+                      names_to = "Parkingson_Group", 
+                      values_to = "OFC_ON_Score")
+
+OFC_ON <- OFC_ON %>%
+  arrange(Parkingson_Group)
+
+OFC_ON <- OFC_ON %>%
+  drop_na()
+
+OFC_ON$Parkingson_Group <- factor(OFC_ON$Parkingson_Group, 
+                                 levels = c("CN", "PDT", "PDAR"))
+levels(OFC_ON$Parkingson_Group)
+
+
+############
+POCL_ON <- read_excel("D:/Senal_Peiris/)
+
+POCL_ON <- pivot_longer(POCL_ON, 
+                       cols = everything(), 
+                       names_to = "Parkingson_Group", 
+                       values_to = "POCL_ON_Score")
+
+POCL_ON <- POCL_ON %>%
+  arrange(Parkingson_Group)
+
+POCL_ON <- POCL_ON %>%
+  drop_na()
+
+POCL_ON$Parkingson_Group <- factor(POCL_ON$Parkingson_Group, 
+                                  levels = c("CN", "PDT", "PDAR"))
+levels(POCL_ON$Parkingson_Group)
+
+
+############
+POCR_ON <- read_excel("D:/Senal_Peiris/)
+
+POCR_ON <- pivot_longer(POCR_ON, 
+                        cols = everything(), 
+                        names_to = "Parkingson_Group", 
+                        values_to = "POCR_ON_Score")
+
+POCR_ON <- POCR_ON %>%
+  arrange(Parkingson_Group)
+
+POCR_ON <- POCR_ON %>%
+  drop_na()
+
+POCR_ON$Parkingson_Group <- factor(POCR_ON$Parkingson_Group, 
+                                   levels = c("CN", "PDT", "PDAR"))
+levels(POCR_ON$Parkingson_Group)
+
+
+
+###Testing assumptions for calculating group differences 
+
+norm1 <- IN_ON %>%
+  group_by(Parkingson_Group) %>%
+  shapiro_test(IN_ON_Score)
+
+# Print the Results
+norm1
+## reject the null , hence data is following a normal distribution
+
+norm2 <- OFC_ON %>%
+  group_by(Parkingson_Group) %>%
+  shapiro_test(OFC_ON_Score)
+
+# Print the Results
+norm2
+## reject the null , hence data is following a normal distribution
+
+
+norm3 <- POCL_ON %>%
+  group_by(Parkingson_Group) %>%
+  shapiro_test(POCL_ON_Score)
+
+# Print the Results
+norm3
+## reject the null , hence data is following a normal distribution
+
+
+norm4 <- POCR_ON %>%
+  group_by(Parkingson_Group) %>%
+  shapiro_test(POCR_ON_Score)
+
+# Print the Results
+norm4
+## reject the null , hence data is following a normal distribution
+
+###testing for homoskedasticity
+
+
+leveneTest(IN_ON_Score ~ Parkingson_Group, data = IN_ON)
+###fail to reject null of Homoskedasticity
+
+leveneTest(OFC_ON_Score ~ Parkingson_Group, data = OFC_ON)
+###fail to reject null of Homoskedasticity
+
+leveneTest(POCL_ON_Score ~ Parkingson_Group, data = POCL_ON)
+###fail to reject null of Homoskedasticity
+
+leveneTest(POCR_ON_Score ~ Parkingson_Group, data = POCR_ON)
+###fail to reject null of Homoskedasticity
+
+
+#########DOING ANOVA on all 4 tables
+#anova1 <- aov(IN_ON_Score ~ Parkingson_Group, data = IN_ON)
+#summary(anova1)
+#emm1 <- emmeans(anova1, ~ Parkingson_Group)
+#emm_df1 <- as.data.frame(emm1)
+
+###null hypothesis is that the group means are equal
+TukeyHSD(anova1)
+
+
+anova2 <- aov(OFC_ON_Score ~ Parkingson_Group, data = OFC_ON)
+summary(anova2)
+###null hypothesis is that the group means are equal
+TukeyHSD(anova2)
+
+anova3 <- aov(POCL_ON_Score ~ Parkingson_Group, data = POCL_ON)
+summary(anova3)
+###null hypothesis is that the group means are equal
+TukeyHSD(anova3)
+
+anova4 <- aov(POCR_ON_Score ~ Parkingson_Group, data = POCR_ON)
+summary(anova4)
+###null hypothesis is that the group means are equal
+TukeyHSD(anova4)
+
+
+
+#######Beeswarm plot for all 4 graphs##################
+ggplot(POCL_ON, aes(x = Parkingson_Group, y = POCL_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(POCL_ON, mapping = aes(x = Parkingson_Group, y = POCL_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs( x="",y = "FC between POC.L and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+ggplot(POCR_ON, aes(x = Parkingson_Group, y = POCR_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(POCR_ON, mapping = aes(x = Parkingson_Group, y = POCR_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between POC.R and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+ggplot(OFC_ON, aes(x = Parkingson_Group, y = OFC_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(OFC_ON, mapping = aes(x = Parkingson_Group, y = OFC_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between OFC and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+ggplot(IN_ON, aes(x = Parkingson_Group, y = IN_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(IN_ON, mapping = aes(x = Parkingson_Group, y = IN_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between Insula and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+
+#################figure 4#####################
+## clearing environment and setting working directory
+rm(list=ls()) 
+
+cat("\014")
+
+
+options(scipen = 999)
+
+library(tidyr)
+library(dplyr)
+library("readxl")
+library(ggplot2)
+library(ggpubr)
+library(ggbeeswarm)
+library(rstatix)
+library(car)
+
+#install.packages("ggbeeswarm")
+#install.packages("writexl")
+#library(writexl)
+
+CERE_ON <- read_excel("D:/Senal_Peiris/)
+
+CERE_ON <- pivot_longer(CERE_ON, 
+                      cols = everything(), 
+                      names_to = "Parkingson_Group", 
+                      values_to = "CERE_ON_Score")
+
+CERE_ON <- CERE_ON %>%
+  arrange(Parkingson_Group)
+
+CERE_ON <- CERE_ON %>%
+  drop_na()
+
+CERE_ON$Parkingson_Group <- factor(CERE_ON$Parkingson_Group, 
+                                 levels = c("CN", "PDT", "PDAR"))
+levels(CERE_ON$Parkingson_Group)
+
+
+HIPPO_ON <- read_excel("D:/Senal_Peiris/)
+
+HIPPO_ON <- pivot_longer(HIPPO_ON, 
+                        cols = everything(), 
+                        names_to = "Parkingson_Group", 
+                        values_to = "HIPPO_ON_Score")
+
+HIPPO_ON <- HIPPO_ON %>%
+  arrange(Parkingson_Group)
+
+HIPPO_ON <- HIPPO_ON %>%
+  drop_na()
+
+HIPPO_ON$Parkingson_Group <- factor(HIPPO_ON$Parkingson_Group, 
+                                   levels = c("CN", "PDT", "PDAR"))
+levels(HIPPO_ON$Parkingson_Group)
+
+
+PCC_ON <- read_excel("D:/Senal_Peiris/)
+
+PCC_ON <- pivot_longer(PCC_ON, 
+                         cols = everything(), 
+                         names_to = "Parkingson_Group", 
+                         values_to = "PCC_ON_Score")
+
+PCC_ON <- PCC_ON %>%
+  arrange(Parkingson_Group)
+
+PCC_ON <- PCC_ON %>%
+  drop_na()
+
+PCC_ON$Parkingson_Group <- factor(PCC_ON$Parkingson_Group, 
+                                    levels = c("CN", "PDT", "PDAR"))
+levels(PCC_ON$Parkingson_Group)
+
+#######Beeswarm plot for all 3 graphs##################
+ggplot(CERE_ON, aes(x = Parkingson_Group, y = CERE_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(CERE_ON, mapping = aes(x = Parkingson_Group, y = CERE_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between Cere and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+ggplot(HIPPO_ON, aes(x = Parkingson_Group, y = HIPPO_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(HIPPO_ON, mapping = aes(x = Parkingson_Group, y = HIPPO_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between Hippo.L and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+ggplot(PCC_ON, aes(x = Parkingson_Group, y = PCC_ON_Score, color = Parkingson_Group)) +
+  geom_boxplot(PCC_ON, mapping = aes(x = Parkingson_Group, y = PCC_ON_Score, color = Parkingson_Group))+
+  geom_beeswarm(size =3) +
+  labs(x="", y = "FC between POC and ON") +
+  theme_classic() +
+  scale_color_manual(values = c("CN" = rgb(red = 103, green = 134, blue = 187, maxColorValue = 255), "PDT" = rgb(red = 115, green = 181, blue = 132, maxColorValue = 255),"PDAR" = rgb(red = 198, green = 83, blue = 87, maxColorValue = 255))) +
+  theme(legend.position = "none")+
+  theme(axis.text = element_text(face="bold", size = 12, colour = "black"))+
+  theme(axis.title = element_text(face="bold", size = 15, colour = "black"))+
+  theme( axis.line = element_line(colour = "black", size = 1, linetype = "solid"))
+
+
+
