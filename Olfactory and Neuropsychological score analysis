@@ -1,0 +1,1221 @@
+---
+title: "ODIMA Neuropsyhological Test Data"
+author: "Senal Peiris"
+date: "2024-10-16"
+output: 
+  html_document:
+    toc: TRUE         # Enables the table of contents
+    toc_depth: 3      # Controls the depth of sections shown in the TOC
+    toc_float: TRUE   # Makes the TOC float on the side (optional)
+    number_sections: TRUE
+    theme: flatly
+---
+
+
+# Data cleansing (coding only can be skipped)
+```{r,results = "hide"}
+## clearing environment and setting working directory
+rm(list=ls()) 
+
+cat("\014")
+
+setwd("D:/Senal_Peiris/3. AD Grant and Research/Neuropsych_test_and_CDR")
+
+options(scipen = 999)
+
+# Install and load the gtsummary package if you haven't already
+# install.packages("gtsummary")
+#install.packages(prettydoc)
+
+#library(prettydoc)
+library(gtsummary)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(ggbeeswarm)
+library(plotly)
+library(rstatix)
+
+data <- read_excel("mODIMA_Local_Neuro.xlsx",sheet=1)
+#glimpse(data)
+
+data$Study_ID <- trimws(data$`Study ID`)
+data <- data %>% select(-`Study ID`)
+
+#re-ordering columns
+data <- data %>% select(Study_ID, everything())
+
+## we want to remove participants who do not have data ie :0007 and 0018
+data <- data %>% filter(!Study_ID %in% c("ODIMA_0007", "ODIMA_0018"))
+
+#####making the string N/A in digit span backwords an actual NA value
+data$`Digit Span Backwards` <- na_if(data$`Digit Span Backwards`, "N/A")
+
+data$`Digit Span Backwards` <- as.numeric(data$`Digit Span Backwards`)
+
+count_data <- data %>%
+  group_by(Category) %>%
+  summarise(count = n())
+
+#making category variable a factor with levels of MCI and HC
+data$Category <- factor(data$Category)
+#str(data)
+```
+# Master Data Table
+
+```{r, echo=FALSE, warning = FALSE}
+library(tidyverse)
+library(DT)
+
+table_data <- data %>%
+  select(-"MRN",-"Date (Neuro)",-"DOB")
+#str(data)
+
+datatable(table_data, options = list(scrollX = TRUE))
+
+```
+
+
+
+# Box Plots - Neuropsychological Tests
+
+The box plot shows the maximum and minimum in the whiskers. The median and interquartile range are also shown in the plots. Any plots of data outside the whiskers are condsidered outliers.
+
+## Montreal Cognitive Assessment (MOCA) 
+```{r, echo = FALSE, warning = FALSE}
+####1) MOCA box plot
+fig_Moca <- plot_ly(data=data,x=~Category ,
+               y = ~MoCA,
+               type = "box",
+               boxpoints = "all",
+               jitter = 1.5,
+               pointpos = -1.8,
+               color = ~Category,
+               marker = list(
+                 color = 'white',
+                 line = list(color = 'red', 
+                             width = 1.5)), 
+               text = data$Study_ID,
+               hoverinfo = 'text' )
+
+
+fig_Moca <- fig_Moca %>% layout(
+  title = "MoCA Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "MoCA Score")   # Y-axis title
+)
+
+fig_Moca
+```
+
+## Memory Index Score (MIS)
+```{r, echo = FALSE, warning = FALSE}
+fig_MIS <- plot_ly(data=data,x=~Category ,
+                    y = ~MIS,
+                    type = "box",
+                    boxpoints = "all",
+                    jitter = 1.5,
+                    pointpos = -1.8,
+                    color = ~Category,
+                    marker = list(
+                      color = 'white',
+                      line = list(color = 'red', 
+                                  width = 1.5)), 
+                    text = data$Study_ID,
+                    hoverinfo = 'text' )
+
+fig_MIS <- fig_MIS %>% layout(
+  title = "MIS Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "MIS Score")   # Y-axis title
+)
+
+fig_MIS
+```
+
+## Rey Complex Figure Test(RCFT)
+### Rey Complex Figure- Copy
+```{r, echo = FALSE, warning = FALSE}
+fig_RCFT_Copy <- plot_ly(data=data,x=~Category ,
+                   y = ~data$`RCFT Copy`,
+                   type = "box",
+                   boxpoints = "all",
+                   jitter = 1.5,
+                   pointpos = -1.8,
+                   color = ~Category,
+                   marker = list(
+                     color = 'white',
+                     line = list(color = 'red', 
+                                 width = 1.5)), 
+                   text = data$Study_ID,
+                   hoverinfo = 'text' )
+
+fig_RCFT_Copy <- fig_RCFT_Copy %>% layout(
+  title = "Rey Complex Figure Test Copy Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "RCFT Score")   # Y-axis title
+)
+
+fig_RCFT_Copy
+
+```
+
+### Rey Complex Figure- Immediate
+```{r, echo = FALSE, warning = FALSE}
+fig_RCFT_Immediate <- plot_ly(data=data,x=~Category ,
+                         y = ~data$`RCFT Immediate`,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_RCFT_Immediate <- fig_RCFT_Immediate %>% layout(
+  title = "Rey Complex Figure Test Immediate Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "RCFT Score")   # Y-axis title
+)
+
+fig_RCFT_Immediate
+
+```
+
+### Rey Complex Figure- Delayed
+```{r, echo = FALSE, warning = FALSE}
+fig_RCFT_Delayed <- plot_ly(data=data,x=~Category ,
+                              y = ~data$`RCFT Delayed`,
+                              type = "box",
+                              boxpoints = "all",
+                              jitter = 1.5,
+                              pointpos = -1.8,
+                              color = ~Category,
+                              marker = list(
+                                color = 'white',
+                                line = list(color = 'red', 
+                                            width = 1.5)), 
+                              text = data$Study_ID,
+                              hoverinfo = 'text' )
+
+fig_RCFT_Delayed <- fig_RCFT_Delayed %>% layout(
+  title = "Rey Complex Figure Test Delayed Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "RCFT Score")   # Y-axis title
+)
+
+fig_RCFT_Delayed
+
+```
+
+### Rey Complex Figure- Recognition
+```{r, echo = FALSE, warning = FALSE}
+fig_RCFT_recog <- plot_ly(data=data,x=~Category ,
+                            y = ~data$`RCFT Recognition`,
+                            type = "box",
+                            boxpoints = "all",
+                            jitter = 1.5,
+                            pointpos = -1.8,
+                            color = ~Category,
+                            marker = list(
+                              color = 'white',
+                              line = list(color = 'red', 
+                                          width = 1.5)), 
+                            text = data$Study_ID,
+                            hoverinfo = 'text' )
+
+fig_RCFT_recog <- fig_RCFT_recog %>% layout(
+  title = "Rey Complex Figure Test Recognition Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "RCFT Score")   # Y-axis title
+)
+
+fig_RCFT_recog
+
+
+```
+
+## FAS
+### FAS 3
+```{r, echo = FALSE, warning = FALSE}
+fig_FAS3 <- plot_ly(data=data,x=~Category ,
+                          y = ~data$`FAS-3`,
+                          type = "box",
+                          boxpoints = "all",
+                          jitter = 1.5,
+                          pointpos = -1.8,
+                          color = ~Category,
+                          marker = list(
+                            color = 'white',
+                            line = list(color = 'red', 
+                                        width = 1.5)), 
+                          text = data$Study_ID,
+                          hoverinfo = 'text' )
+
+
+fig_FAS3 <- fig_FAS3 %>% layout(
+  title = "FAS-3 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "FAS Score")   # Y-axis title
+)
+
+fig_FAS3
+
+```
+
+
+### FAS Animal
+```{r, echo = FALSE, warning = FALSE}
+fig_FAS_Ani <- plot_ly(data=data,x=~Category ,
+                    y = ~data$FASAnimal,
+                    type = "box",
+                    boxpoints = "all",
+                    jitter = 1.5,
+                    pointpos = -1.8,
+                    color = ~Category,
+                    marker = list(
+                      color = 'white',
+                      line = list(color = 'red', 
+                                  width = 1.5)), 
+                    text = data$Study_ID,
+                    hoverinfo = 'text' )
+
+
+fig_FAS_Ani <- fig_FAS_Ani %>% layout(
+  title = "FAS Animal Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "FAS Score")   # Y-axis title
+)
+
+fig_FAS_Ani
+
+```
+
+## Logical Memory Test
+### Logical Memory 1
+```{r, echo = FALSE, warning = FALSE}
+fig_Logmem_1 <- plot_ly(data=data,x=~Category ,
+                       y = ~data$`Logical Memory I`,
+                       type = "box",
+                       boxpoints = "all",
+                       jitter = 1.5,
+                       pointpos = -1.8,
+                       color = ~Category,
+                       marker = list(
+                         color = 'white',
+                         line = list(color = 'red', 
+                                     width = 1.5)), 
+                       text = data$Study_ID,
+                       hoverinfo = 'text' )
+
+
+fig_Logmem_1 <- fig_Logmem_1 %>% layout(
+  title = "Logical Memory 1 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Logical Memory Score")   # Y-axis title
+)
+
+fig_Logmem_1
+```
+
+
+### Logical Memory 2
+```{r, echo = FALSE, warning = FALSE}
+fig_Logmem_2 <- plot_ly(data=data,x=~Category ,
+                        y = ~data$`Logical Memory II`,
+                        type = "box",
+                        boxpoints = "all",
+                        jitter = 1.5,
+                        pointpos = -1.8,
+                        color = ~Category,
+                        marker = list(
+                          color = 'white',
+                          line = list(color = 'red', 
+                                      width = 1.5)), 
+                        text = data$Study_ID,
+                        hoverinfo = 'text' )
+
+fig_Logmem_2 <- fig_Logmem_2 %>% layout(
+  title = "Logical Memory 2 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Logical Memory Score")   # Y-axis title
+)
+
+fig_Logmem_2
+```
+
+## Digit Span Test
+### Digit Span Total
+```{r, echo = FALSE, warning = FALSE}
+fig_Digit_tot <- plot_ly(data=data,x=~Category ,
+                        y = ~data$`Digit Span Total`,
+                        type = "box",
+                        boxpoints = "all",
+                        jitter = 1.5,
+                        pointpos = -1.8,
+                        color = ~Category,
+                        marker = list(
+                          color = 'white',
+                          line = list(color = 'red', 
+                                      width = 1.5)), 
+                        text = data$Study_ID,
+                        hoverinfo = 'text' )
+
+fig_Digit_tot <- fig_Digit_tot %>% layout(
+  title = "Digit Span Total Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Digit Span Score")   # Y-axis title
+)
+
+fig_Digit_tot
+
+```
+
+### Digit Span Forwards
+```{r, echo = FALSE, warning = FALSE}
+fig_Digit_For <- plot_ly(data=data,x=~Category ,
+                         y = ~data$`Digit Span Forwards`,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_Digit_For <- fig_Digit_For %>% layout(
+  title = "Digit Span Forwards Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Digit Span Score")   # Y-axis title
+)
+
+fig_Digit_For
+```
+
+### Digit Span Backwards
+```{r, echo = FALSE, warning = FALSE}
+fig_Digit_Bac <- plot_ly(data=data,x=~Category ,
+                         y = ~data$`Digit Span Backwards`,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_Digit_Bac <- fig_Digit_Bac %>% layout(
+  title = "Digit Span Backwards Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Digit Span Score")   # Y-axis title
+)
+
+fig_Digit_Bac
+```
+
+
+## California Verbal Learning Test(CVLT)
+### California Verbal Learning Test- List A-1
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A1 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT31,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A1 <- fig_CVLT_3_A1 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 1 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A1
+```
+
+
+### California Verbal Learning Test- List A-2 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A2 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT32,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A2 <- fig_CVLT_3_A2 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 2 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A2
+```
+
+
+### California Verbal Learning Test- List A-3
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A3 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT33,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A3 <- fig_CVLT_3_A3 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 3 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A3
+```
+
+### California Verbal Learning Test- List A-4
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A4 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT34,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A4 <- fig_CVLT_3_A4 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 4 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A4
+```
+
+
+### California Verbal Learning Test- List A-5
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A5 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT35,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A5 <- fig_CVLT_3_A5 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 5 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A5
+```
+
+
+### California Verbal Learning Test- List B 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_A5 <- plot_ly(data=data,x=~Category ,
+                         y = ~data$CVLT35,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_CVLT_3_A5 <- fig_CVLT_3_A5 %>% layout(
+  title = "California Verbal Learning Test - List A Trial 5 Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_A5
+```
+
+
+### California Verbal Learning Test- List A Short Delay Free Recall 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_SDFR <- plot_ly(data=data,x=~Category ,
+                        y = ~data$CVLTSDFR,
+                        type = "box",
+                        boxpoints = "all",
+                        jitter = 1.5,
+                        pointpos = -1.8,
+                        color = ~Category,
+                        marker = list(
+                          color = 'white',
+                          line = list(color = 'red', 
+                                      width = 1.5)), 
+                        text = data$Study_ID,
+                        hoverinfo = 'text' )
+
+fig_CVLT_3_SDFR <- fig_CVLT_3_SDFR %>% layout(
+  title = "California Verbal Learning Test - List A Short Delay Free Recall Scores  Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_SDFR
+```
+
+
+### California Verbal Learning Test- List A Short Delay Cued Recall 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_SDCR <- plot_ly(data=data,x=~Category ,
+                           y = ~data$CVLTSDCR,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_CVLT_3_SDCR <- fig_CVLT_3_SDCR %>% layout(
+  title = "California Verbal Learning Test - List A Short Delay Cued Recall Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_SDCR
+```
+
+### California Verbal Learning Test- List A Long Delay Free Recall 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_LDFR <- plot_ly(data=data,x=~Category ,
+                           y = ~data$CVLTLDFR,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_CVLT_3_LDFR <- fig_CVLT_3_LDFR %>% layout(
+  title = "California Verbal Learning Test - List A Long Delay Free Recall Scores  Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_LDFR
+```
+
+
+### California Verbal Learning Test- List A Long Delay Cued Recall 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_LDCR <- plot_ly(data=data,x=~Category ,
+                           y = ~data$CVLTLDCR,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_CVLT_3_LDCR <- fig_CVLT_3_LDCR %>% layout(
+  title = "California Verbal Learning Test - List A Long Delay Cued Recall Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_LDCR
+```
+
+### California Verbal Learning Test- Hits 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_Hits <- plot_ly(data=data,x=~Category ,
+                           y = ~data$CVLTHits,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_CVLT_3_Hits <- fig_CVLT_3_Hits %>% layout(
+  title = "California Verbal Learning Test Hit Scores  Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_Hits
+```
+
+
+### California Verbal Learning Test- False Positives 
+```{r, echo = FALSE, warning = FALSE}
+fig_CVLT_3_FP <- plot_ly(data=data,x=~Category ,
+                           y = ~data$CVLTFP,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_CVLT_3_FP <- fig_CVLT_3_FP %>% layout(
+  title = "California Verbal Learning Test Fasle Positives Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "CVLT Score")   # Y-axis title
+)
+
+fig_CVLT_3_FP
+```
+
+
+## Diles-Kaplan Executive Function System Color-Word Interference (DKEFS)
+### DKEFS- Color
+```{r, echo = FALSE, warning = FALSE}
+fig_DKEFS_Color <- plot_ly(data=data,x=~Category ,
+                         y = ~data$Color,
+                         type = "box",
+                         boxpoints = "all",
+                         jitter = 1.5,
+                         pointpos = -1.8,
+                         color = ~Category,
+                         marker = list(
+                           color = 'white',
+                           line = list(color = 'red', 
+                                       width = 1.5)), 
+                         text = data$Study_ID,
+                         hoverinfo = 'text' )
+
+fig_DKEFS_Color <- fig_DKEFS_Color %>% layout(
+  title = "DKEFS Color Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "DKEFS Score")   # Y-axis title
+)
+
+fig_DKEFS_Color
+```
+
+### DKEFS- Word
+```{r, echo = FALSE, warning = FALSE}
+fig_DKEFS_Word <- plot_ly(data=data,x=~Category ,
+                           y = ~data$Word,
+                           type = "box",
+                           boxpoints = "all",
+                           jitter = 1.5,
+                           pointpos = -1.8,
+                           color = ~Category,
+                           marker = list(
+                             color = 'white',
+                             line = list(color = 'red', 
+                                         width = 1.5)), 
+                           text = data$Study_ID,
+                           hoverinfo = 'text' )
+
+fig_DKEFS_Word <- fig_DKEFS_Word %>% layout(
+  title = "DKEFS Word Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "DKEFS Score")   # Y-axis title
+)
+
+fig_DKEFS_Word
+```
+
+
+### DKEFS- Inhibition
+```{r, echo = FALSE, warning = FALSE}
+fig_DKEFS_Inhibition <- plot_ly(data=data,x=~Category ,
+                          y = ~data$Inhibition,
+                          type = "box",
+                          boxpoints = "all",
+                          jitter = 1.5,
+                          pointpos = -1.8,
+                          color = ~Category,
+                          marker = list(
+                            color = 'white',
+                            line = list(color = 'red', 
+                                        width = 1.5)), 
+                          text = data$Study_ID,
+                          hoverinfo = 'text' )
+
+fig_DKEFS_Inhibition <- fig_DKEFS_Inhibition %>% layout(
+  title = "DKEFS Inhibition Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "DKEFS Score")   # Y-axis title
+)
+
+fig_DKEFS_Inhibition
+```
+
+### DKEFS- Switch
+```{r, echo = FALSE, warning = FALSE}
+fig_DKEFS_Switch <- plot_ly(data=data,x=~Category ,
+                                y = ~data$Switch,
+                                type = "box",
+                                boxpoints = "all",
+                                jitter = 1.5,
+                                pointpos = -1.8,
+                                color = ~Category,
+                                marker = list(
+                                  color = 'white',
+                                  line = list(color = 'red', 
+                                              width = 1.5)), 
+                                text = data$Study_ID,
+                                hoverinfo = 'text' )
+
+fig_DKEFS_Switch <- fig_DKEFS_Switch %>% layout(
+  title = "DKEFS Switch Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "DKEFS Score")   # Y-axis title
+)
+
+fig_DKEFS_Switch
+```
+
+
+## Judgement of Line Orientation (JLO)
+```{r, echo = FALSE, warning = FALSE}
+fig_JLO <- plot_ly(data=data,x=~Category ,
+                            y = ~data$JLO,
+                            type = "box",
+                            boxpoints = "all",
+                            jitter = 1.5,
+                            pointpos = -1.8,
+                            color = ~Category,
+                            marker = list(
+                              color = 'white',
+                              line = list(color = 'red', 
+                                          width = 1.5)), 
+                            text = data$Study_ID,
+                            hoverinfo = 'text' )
+
+fig_JLO <- fig_JLO %>% layout(
+  title = "Judgement of Line Orientation Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "JLO Score")   # Y-axis title
+)
+
+fig_JLO
+```
+
+
+## Boston Naming Test (BNT)
+```{r, echo = FALSE, warning = FALSE}
+fig_BNT <- plot_ly(data=data,x=~Category ,
+                   y = ~data$BNT,
+                   type = "box",
+                   boxpoints = "all",
+                   jitter = 1.5,
+                   pointpos = -1.8,
+                   color = ~Category,
+                   marker = list(
+                     color = 'white',
+                     line = list(color = 'red', 
+                                 width = 1.5)), 
+                   text = data$Study_ID,
+                   hoverinfo = 'text' )
+
+fig_BNT <- fig_BNT %>% layout(
+  title = "Boston Naming Test Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "BNT Score")   # Y-axis title
+)
+
+fig_BNT
+```
+
+
+## Olfactory Testing
+### Olfactory Threshold Test
+```{r, echo = FALSE, warning = FALSE}
+fig_Thresh <- plot_ly(data=data,x=~Category ,
+                   y = ~data$Threshold,
+                   type = "box",
+                   boxpoints = "all",
+                   jitter = 1.5,
+                   pointpos = -1.8,
+                   color = ~Category,
+                   marker = list(
+                     color = 'white',
+                     line = list(color = 'red', 
+                                 width = 1.5)), 
+                   text = data$Study_ID,
+                   hoverinfo = 'text' )
+
+fig_Thresh <- fig_Thresh %>% layout(
+  title = "Threshold Smell Test Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Score")   # Y-axis title
+)
+
+fig_Thresh
+```
+
+
+### Olfactory Identification Test
+```{r, echo = FALSE, warning = FALSE}
+fig_Iden <- plot_ly(data=data,x=~Category ,
+                      y = ~data$Identification,
+                      type = "box",
+                      boxpoints = "all",
+                      jitter = 1.5,
+                      pointpos = -1.8,
+                      color = ~Category,
+                      marker = list(
+                        color = 'white',
+                        line = list(color = 'red', 
+                                    width = 1.5)), 
+                      text = data$Study_ID,
+                      hoverinfo = 'text' )
+
+fig_Iden <- fig_Iden %>% layout(
+  title = "Identification Smell Test Scores Boxplot",  # Title of the plot
+  xaxis = list(title = "Category"),    # X-axis title
+  yaxis = list(title = "Score")   # Y-axis title
+)
+
+fig_Iden
+```
+
+
+# Outlier Identification (coding only can be skipped)
+```{r,results = "hide"}
+## clearing environment and setting working directory
+rm(list=ls()) 
+
+cat("\014")
+
+setwd("D:/Senal_Peiris/3. AD Grant and Research/Neuropsych_test_and_CDR")
+
+options(scipen = 999)
+
+# install.packages("gtsummary")
+library(gtsummary)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(ggbeeswarm)
+library(plotly)
+library(rstatix)
+library(readxl)
+data <- read_excel("mODIMA_Local_Neuro.xlsx",sheet=1)
+
+data$Study_ID <- trimws(data$`Study ID`)
+data <- data %>% select(-`Study ID`)
+
+#re-ordering columns
+data <- data %>% select(Study_ID, everything())
+
+## we want to remove participants who do not have data ie :0007 and 0018
+data <- data %>% filter(!Study_ID %in% c("ODIMA_0007", "ODIMA_0018"))
+
+#####making the string N/A in digit span backwords an actual NA value
+data$`Digit Span Backwards` <- na_if(data$`Digit Span Backwards`, "N/A")
+
+data$`Digit Span Backwards` <- as.numeric(data$`Digit Span Backwards`)
+
+count_data <- data %>%
+  group_by(Category) %>%
+  summarise(count = n())
+
+data$Category <- factor(data$Category)
+ ###########doing the IQR outlier analysis##############
+
+ #loop over the numeric columns, calculate the IQR, and create new columns flagging outliers
+ 
+ # Create a Function to detect outliers based on IQR
+ detect_outliers <- function(x) {
+   Q1 <- quantile(x, 0.25, na.rm = TRUE)
+   Q3 <- quantile(x, 0.75, na.rm = TRUE)
+   IQR <- Q3 - Q1
+   
+   # Define the lower and upper bounds
+   lower_bound <- Q1 - 1.5 * IQR
+   upper_bound <- Q3 + 1.5 * IQR
+   
+   # Flag as TRUE if the value is an outlier based on being above the upper or below the lower bound
+   outliers <- x < lower_bound | x > upper_bound
+   
+   return(outliers)
+ }
+ 
+ # Applying the function to all numeric columns in your dataset
+  df_outliers <- data
+ numeric_columns <- sapply(data, is.numeric)
+ 
+ # Loop through each numeric column to create an outlier column
+ for (colname in names(data)[numeric_columns]) {
+   outlier_colname <- paste(colname, "outlier", sep = "_")
+   df_outliers[[outlier_colname]] <- detect_outliers(data[[colname]])
+ }
+ 
+ # View the dataset with outlier flags
+ 
+ head(df_outliers)
+ 
+ ###columns in outlier dataframe
+ col_d_out <- names(df_outliers)
+ ###columns in initial dataframe
+ col_d_nor <- names(data)
+ 
+ ## getting the extra columns (which are outliers) as the difference in column names between the 2 data frames
+ extra_columns <- setdiff(col_d_out, col_d_nor)
+ 
+ ###keeping only the columns with the outlier true and false categorization along with unique identifier and group
+ 
+ extra_columns <- c("Study_ID","Category",extra_columns)
+ extra_columns <- as.character(extra_columns) ###making sure the data is stored as a character
+ 
+ #####dropping all the initial dataframe columns to retain only the newly created outliers columns
+ df_outliers <- df_outliers[, extra_columns, drop = FALSE]
+#making sure the data is stored as logicals where TRUE is an outlier data and FALSE is a normal data
+  str(df_outliers)
+
+###removing unnecessary columns which are numeric but not useful for analysis
+df_outliers <- df_outliers %>% select(-"DOB_outlier",-"MRN_outlier",-"Education_outlier",-"Date (Neuro)_outlier")
+
+#### creating a data table with all the participants along with the tests for which they are outliers for
+
+#creating a new column with the count of values with TRUE for each participant
+rows_with_true <- apply(df_outliers, 1, function(row) any(row == TRUE))
+
+# Subset the dataframe to keep only the rows with more than one TRUE value
+df_with_true <- df_outliers[rows_with_true, ]
+
+# View the resulting dataframe
+#print(df_with_true)
+
+####export the data as an excel
+
+#library(writexl) 
+#write_xlsx(df_with_true, "output.xlsx")
+
+```
+
+# Outlier Data
+```{r, echo = FALSE, warning = FALSE}
+#install.packages("DT")
+# Load necessary libraries
+library(knitr)
+library(kableExtra)
+library(gtsummary)
+library(tidyverse)
+library(DT)
+
+# Load data from a file
+df_with_true <- read.csv("D:/Senal_Peiris/3. AD Grant and Research/Neuropsych_test_and_CDR/output.csv")
+
+#str(df_with_true)
+
+```
+
+## Outlier participant data table
+
+A value of TRUE indicates that the particular data is an outlier. Outliers are detected using the interquartile range for each participant category.
+
+```{r, echo = FALSE, warning = FALSE}
+#df_with_true %>% tbl_summary(by = Category)
+library(DT)
+df_filtered <- df_with_true %>%
+  select(Category, where(~ !all(. == FALSE)))  # Select only columns where not all values are FALSE
+
+df_filtered <- df_filtered %>%
+  mutate(Digit.Span.Backwards_outlier = ifelse(is.na(Digit.Span.Backwards_outlier), "FALSE",Digit.Span.Backwards_outlier))
+
+df_filtered$Digit.Span.Backwards_outlier <- as.logical(df_filtered$Digit.Span.Backwards_outlier)
+
+datatable(df_filtered, options = list(scrollX = TRUE))
+#kable(df_filtered) %>%
+  #kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+
+```
+
+## Summary table of outliers by group 
+```{r, echo = FALSE, warning = FALSE}
+#str(df_filtered)
+
+summary_table <- df_filtered %>%
+  group_by(Category) %>%
+  summarise(across(where(is.logical), ~ sum(. == TRUE), .names = "{col}"))
+
+
+# Display the summary table
+datatable(summary_table, options = list(scrollX = TRUE))
+```
+
+## Classifying Outliers based on their value being high or low
+
+Next i took the initial dataset and clubbed outliers as a "high outlier" or "Low outlier" based on being either above the upper or below the lower bound of the IQR.
+```{r, echo = FALSE, warning = FALSE}
+library(DT)
+library(tidyverse)
+
+### creating a new function which classifies outliers as High or low)
+detect_outliers_high_low <- function(x) {
+   Q1 <- quantile(x, 0.25, na.rm = TRUE)
+   Q3 <- quantile(x, 0.75, na.rm = TRUE)
+   IQR <- Q3 - Q1
+   
+   # Define the lower and upper bounds
+   lower_bound <- Q1 - 1.5 * IQR
+   upper_bound <- Q3 + 1.5 * IQR
+   
+   # Identify the type of outlier
+   outlier_type <- ifelse(x < lower_bound, "Low outlier",
+                          ifelse(x > upper_bound, "High outlier", NA))
+   
+   return(outlier_type)
+}
+
+# Applying the function to all numeric columns in your dataset
+  df_out_high_low <- data
+ numeric_columns <- sapply(data, is.numeric)
+ 
+ # Loop through each numeric column to create an outlier column
+ for (colname in names(data)[numeric_columns]) {
+   outlier_colname <- paste(colname, "outlier", sep = "_")
+   df_out_high_low[[outlier_colname]] <- detect_outliers_high_low(data[[colname]])
+ }
+ 
+ # View the new dataset with new outlier flags
+ #head(df_out_high_low)
+
+###columns in outlier dataframe
+ col_d_out_n <- names(df_out_high_low)
+ ###columns in initial dataframe
+ col_d_nor <- names(data)
+ 
+ ## getting the extra columns (which are outliers) as the difference in column names between the 2 data frames
+ extra_columns_n <- setdiff(col_d_out_n, col_d_nor)
+ 
+ ###keeping only the columns with the outlier true and false categorization along with unique identifier and group
+ 
+ extra_columns_n <- c("Study_ID","Category",extra_columns)
+ extra_columns_n <- as.character(extra_columns) ###making sure the data is stored as a character
+ 
+ #####dropping all the initial dataframe columns to retain only the newly created outliers columns
+ df_out_high_low <- df_out_high_low[, extra_columns_n, drop = FALSE]
+
+###removing unnecessary columns which are numeric but not useful for analysis
+df_out_high_low <- df_out_high_low %>% select(-"DOB_outlier",-"MRN_outlier",-"Education_outlier",-"Date (Neuro)_outlier")
+
+#is.na(df_out_high_low)
+str(df_out_high_low)
+
+datatable(df_out_high_low, options = list(scrollX = TRUE))
+
+```
+
+# Z-score standardization of raw test data for clustering
+
+```{r}
+zdata <- data %>%
+  select(-"DOB",-"MRN",-"Education",-"Date (Neuro)",-"Age")
+ 
+
+data_numeric <- zdata[sapply(zdata, is.numeric)]
+
+data_scaled <- as.data.frame(scale(data_numeric))
+
+data_scaled$Study_ID <- data$Study_ID
+data_scaled$Category <- data$Category
+
+#rearrange columns
+data_scaled <- data_scaled %>% select(Study_ID,Category, everything())
+
+##clustering dataset
+data_clust <- data_scaled[sapply(data_scaled, is.numeric)]
+
+dist_matrix <- dist(data_clust)
+
+hc <- hclust(dist_matrix, method = "ward.D2")
+
+plot(hc, main = "Dendrogram of Hierarchical Clustering", xlab = "", sub = "")
+
+
+# Calculate the correlation matrix
+cor_matrix <- cor(data_clust, use = "complete.obs")
+
+# Perform hierarchical clustering
+hc1 <- hclust(dist(1 - cor_matrix))
+plot(hc1)
+
+
+
+
+
+
+#Cut the dendrogram to create 4 clusters
+clusters <- cutree(hc, k = 4)
+
+# Print cluster memberships
+print(clusters)
+```
+
+
