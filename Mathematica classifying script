@@ -1,0 +1,38 @@
+ClearAll["Global`*"]
+
+data = ReadList["D:\\Senal_Peiris\\Mathematica\\Neuro_data.txt",Table[Number, {38}]];
+data1 = Take[#, {37, 38}] & /@ data;
+
+HC = Take[data1, 51];
+MCI = Take[data1, -45];
+
+
+(*Map values and assign labels A and B:*)
+HCnn = (HC[[#]] -> "A") & /@ Range[1, Length[HC]];
+MCInn = (MCI[[#]] -> "B") & /@ Range[1, Length[MCI]];
+
+(*Combine HC and MCI lists into a single training set*)
+trainingsetolfactiononly = Flatten[{HCnn, MCInn}]
+
+trainingset1 = RandomSample[trainingsetolfactiononly];
+results = {};
+results1 = {};
+Do[b = RandomInteger[{1, Length[trainingset1]}, 20];
+  	sub = (#[[1]] & /@ (Flatten[Take[trainingset1, {#}] & /@ b]));
+       subClass = (#[[2]] & /@ (Flatten[Take[trainingset1, {#}] & /@ b]));
+  	trainingset2 = Delete[trainingset1, {#} & /@ b ];
+  	c = Classify[trainingset2];
+  	AppendTo[results, {subClass, c[sub]}];
+      AppendTo[
+   results1, (#[[1]] == #[[2]]) & /@ 
+    Transpose[{subClass, (c /@ sub)}]];, {100}];
+
+fresults = N[Count[Boole[#], 1]/20] & /@ results1
+
+
+
+= Histogram[fresults]
+
+Mean[fresults];
+N[Count[Boole[Flatten[results1]], 1]/Length[Flatten[results1]]]*100
+
